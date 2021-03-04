@@ -5,7 +5,9 @@ import (
 	"os"
 
 	"b-pay/config/database"
+	"b-pay/config/middleware"
 	"b-pay/config/migration"
+	savingController "b-pay/controllers/savingcontroller"
 	userController "b-pay/controllers/usercontroller"
 
 	"github.com/gin-gonic/gin"
@@ -31,10 +33,28 @@ func main() {
 
 	v1 := r.Group("/v1")
 	{
+		// Can be accessed without token
 		public := v1.Group("/public")
 		{
+			// User Registration
 			public.POST("/register", userController.RegisterUserHandler)
+			// User Login
 			public.POST("/login", userController.LoginHandler)
+		}
+
+		// Can be accessed with token.
+		protected := v1.Group("/protected")
+		protected.Use(middleware.AuthJWT())
+		{
+			saving := protected.Group("/s")
+			{
+				// Create a Saving account
+				saving.POST("/create", savingController.CreateSavingHandler)
+				// Get all Saving account owned by the User who accessed it.
+				saving.GET("/", savingController.IndexSavingHandler)
+				// Log into a Saving account.
+				saving.POST("/login/:id", savingController.LoginSavingHandler)
+			}
 		}
 	}
 

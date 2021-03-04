@@ -10,7 +10,7 @@ import (
 type User struct {
 	gorm.Model
 	Name     string `gorm:"size:100"`
-	Email    string `gorm:"size:300"`
+	Email    string `gorm:"size:300;unique;"`
 	Password []byte
 	Savings  []Saving
 }

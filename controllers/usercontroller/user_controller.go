@@ -111,6 +111,12 @@ func LoginHandler(c *gin.Context) {
 		returnErrorAndAbort(c, http.StatusBadRequest, err.Error())
 		return
 	}
+
+	if len(input.Email) < 3 || len(input.Password) < 3 {
+		returnErrorAndAbort(c, http.StatusBadRequest, "Email, and Password length must be more than 3")
+		return
+	}
+
 	userEmail := models.User{
 		Email: input.Email,
 	}
