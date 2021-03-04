@@ -54,6 +54,12 @@ func main() {
 				saving.GET("/", savingController.IndexSavingHandler)
 				// Log into a Saving account.
 				saving.POST("/login/:id", savingController.LoginSavingHandler)
+				// Show a Saving data info.
+				saving.GET("/show/:id", savingController.ShowSavingHandler)
+				// Update a Saving data info. (Only Name and PIN)
+				saving.PATCH("/update/:id", savingController.UpdateSavingHandler)
+				// Delete a Saving account.
+				saving.DELETE("/delete/:id", savingController.DeleteSavingHandler)
 			}
 		}
 	}

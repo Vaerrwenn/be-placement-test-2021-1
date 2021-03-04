@@ -58,3 +58,31 @@ func (s *Saving) GetPINBySavingID(savingID string) string {
 
 	return result
 }
+
+// GetSavingByID gets/fetches Saving data by searching the ID.
+func (s *Saving) GetSavingByID(id string) *Saving {
+	var result Saving
+	err := database.DB.Where("id = ?", id).First(&result).Error
+	if err != nil {
+		return nil
+	}
+	return &result
+}
+
+// Update updates the "source" data with the inputted data.
+func (s *Saving) Update(source *Saving) error {
+	err := database.DB.Model(&source).Updates(&s).Error
+	return err
+}
+
+// Delete deletes a Saving account data.
+// Changes balance to 0 first before soft-deleting the data.
+func (s *Saving) Delete() error {
+	err := database.DB.Model(&s).Update("balance", 0).Error
+	if err != nil {
+		return err
+	}
+
+	err = database.DB.Delete(&s).Error
+	return err
+}
