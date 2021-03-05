@@ -9,9 +9,9 @@ import (
 // User defines every user's data.
 type User struct {
 	gorm.Model
-	Name     string `gorm:"size:100"`
-	Email    string `gorm:"size:300;unique;"`
-	Password []byte
+	Name     string `gorm:"size:100;not null;"`
+	Email    string `gorm:"size:300;unique;not null;"`
+	Password []byte `gorm:"not null"`
 	Savings  []Saving
 }
 

@@ -9,9 +9,9 @@ import (
 // Saving defines every saving's data.
 type Saving struct {
 	gorm.Model
-	UserID       uint
+	UserID       uint   `gorm:"not null"`
 	Name         string `gorm:"size:100"`
-	Balance      int64
+	Balance      int64  `gorm:"not null"`
 	PIN          []byte `gorm:"size:6"`
 	Transactions []Transaction
 }
@@ -62,7 +62,8 @@ func (s *Saving) GetPINBySavingID(savingID string) string {
 // GetSavingByID gets/fetches Saving data by searching the ID.
 func (s *Saving) GetSavingByID(id string) *Saving {
 	var result Saving
-	err := database.DB.Where("id = ?", id).First(&result).Error
+	// err := database.DB.Where("id = ?", id).First(&result).Error
+	err := database.DB.Preload("Transactions").Where("savings.id = ?", id).First(&result).Error
 	if err != nil {
 		return nil
 	}
@@ -84,5 +85,12 @@ func (s *Saving) Delete() error {
 	}
 
 	err = database.DB.Delete(&s).Error
+	return err
+}
+
+// ChangeBalance changes the Balance of a Saving.
+// Call with the Source, in this case, the s.
+func (s *Saving) ChangeBalance(value int64) error {
+	err := database.DB.Model(&s).Update("balance", value).Error
 	return err
 }

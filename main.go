@@ -8,6 +8,7 @@ import (
 	"b-pay/config/middleware"
 	"b-pay/config/migration"
 	savingController "b-pay/controllers/savingcontroller"
+	transactionController "b-pay/controllers/transactioncontroller"
 	userController "b-pay/controllers/usercontroller"
 
 	"github.com/gin-gonic/gin"
@@ -55,12 +56,19 @@ func main() {
 				// Log into a Saving account.
 				saving.POST("/login/:id", savingController.LoginSavingHandler)
 				// Show a Saving data info.
-				saving.GET("/show/:id", savingController.ShowSavingHandler)
+				saving.GET("/:id", savingController.ShowSavingHandler)
 				// Update a Saving data info. (Only Name and PIN)
 				saving.PATCH("/update/:id", savingController.UpdateSavingHandler)
 				// Delete a Saving account.
 				saving.DELETE("/delete/:id", savingController.DeleteSavingHandler)
 			}
+
+			transaction := protected.Group("/t")
+			{
+				// Add a Transaction to a saving account.
+				transaction.POST("/add", transactionController.CreateTransactionHandler)
+			}
+
 		}
 	}
 

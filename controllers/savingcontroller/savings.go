@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -143,12 +144,12 @@ func LoginSavingHandler(c *gin.Context) {
 	}
 
 	// Used as the key to unlock Saving account. Similar to token.
-	key := fmt.Sprintf("key_%s", savingPIN)
+	key := fmt.Sprintf("key_%s", input.PIN)
 
 	c.JSON(http.StatusOK, gin.H{
 		"data": savingID,
 		"key":  key,
-		"msg":  "Successfully logging in to Saving account",
+		"msg":  "Login success.",
 	})
 	return
 }
@@ -161,17 +162,36 @@ func ShowSavingHandler(c *gin.Context) {
 		return
 	}
 
+	// Get key.
+	keyGet := c.Request.Header.Get("key")
+	parts := strings.Split(keyGet, "_")
+	if len(parts) < 1 || parts[0] != "key" {
+		returnErrorAndAbort(c, http.StatusBadRequest, "Invalid syntax for key.")
+		return
+	}
+
 	var saving models.Saving
 	result := saving.GetSavingByID(savingID)
 	if result == nil {
 		returnErrorAndAbort(c, http.StatusNotFound, "No data found.")
 		return
 	}
+
+	// Check if key's last 6 digits is the same with PIN
+	key := parts[1]
+	err := bcrypt.CompareHashAndPassword(result.PIN, []byte(key))
+	if err != nil {
+		returnErrorAndAbort(c, http.StatusForbidden, "Key does not match.")
+		return
+	}
+
 	result.PIN = nil
 
 	c.JSON(http.StatusOK, gin.H{
-		"data": result,
+		"data":           result,
+		"transactionQty": len(result.Transactions),
 	})
+	return
 }
 
 // UpdateSavingHandler handles data update on Saving account.
@@ -186,11 +206,27 @@ func UpdateSavingHandler(c *gin.Context) {
 		return
 	}
 
+	// Get key
+	keyGet := c.Request.Header.Get("key")
+	parts := strings.Split(keyGet, "_")
+	if len(parts) < 1 || parts[0] != "key" {
+		returnErrorAndAbort(c, http.StatusBadRequest, "Invalid syntax for key.")
+		return
+	}
+
 	// Get the Saving that is about to be updated.
 	var saving models.Saving
 	source := saving.GetSavingByID(savingID)
 	if source == nil {
 		returnErrorAndAbort(c, http.StatusNotFound, "No data found.")
+		return
+	}
+
+	// Check if key's last 6 digits is the same with PIN
+	key := parts[1]
+	err := bcrypt.CompareHashAndPassword(source.PIN, []byte(key))
+	if err != nil {
+		returnErrorAndAbort(c, http.StatusForbidden, "Key does not match.")
 		return
 	}
 
@@ -205,7 +241,7 @@ func UpdateSavingHandler(c *gin.Context) {
 		return
 	}
 
-	_, err := strconv.Atoi(input.PIN)
+	_, err = strconv.Atoi(input.PIN)
 	if err != nil || len(input.PIN) != 6 {
 		returnErrorAndAbort(c, http.StatusBadRequest, "PIN must be numeric with 6 digits.")
 		return
@@ -251,11 +287,27 @@ func DeleteSavingHandler(c *gin.Context) {
 		return
 	}
 
+	// Get key
+	keyGet := c.Request.Header.Get("key")
+	parts := strings.Split(keyGet, "_")
+	if len(parts) < 1 || parts[0] != "key" {
+		returnErrorAndAbort(c, http.StatusBadRequest, "Invalid syntax for key.")
+		return
+	}
+
 	// Get the Saving account data that is about to be deleted.
 	var saving models.Saving
 	source := saving.GetSavingByID(savingID)
 	if source == nil {
 		returnErrorAndAbort(c, http.StatusNotFound, "No data found.")
+		return
+	}
+
+	// Check if key's last 6 digits is the same with PIN
+	key := parts[1]
+	err := bcrypt.CompareHashAndPassword(source.PIN, []byte(key))
+	if err != nil {
+		returnErrorAndAbort(c, http.StatusForbidden, "Key does not match.")
 		return
 	}
 
