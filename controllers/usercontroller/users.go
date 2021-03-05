@@ -11,18 +11,25 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// RegisterForm binds the data from the Registration Form to the struct.
+// RegisterForm is for binding the data from the Registration Form to the struct.
 type RegisterForm struct {
 	Name     string `form:"name" binding:"required"`
 	Email    string `form:"email" binding:"required"`
 	Password string `form:"password" binding:"required"`
 }
 
-// LoginForm binds the data from the Login form to the struct.
+// LoginForm is for binding the data from the Login form to the struct.
 type LoginForm struct {
 	Email      string `form:"email" binding:"required"`
 	Password   string `form:"password" binding:"required"`
 	Remembered bool   `form:"remember"`
+}
+
+// UpdatePasswordForm is for binding the data from Update Password form.
+type UpdatePasswordForm struct {
+	OldPassword     string `form:"old-password" binding:"required"`
+	NewPassword     string `form:"new-password" binding:"required"`
+	ConfirmPassword string `form:"confirm-password" binding:"required"`
 }
 
 // returnErrorAndAbort returns a JSON with "error": errorText in it. After that,
@@ -163,5 +170,58 @@ func LoginHandler(c *gin.Context) {
 		"userName":  user.Name,
 	})
 
+	return
+}
+
+// UpdatePasswordHandler handles User's password update.
+func UpdatePasswordHandler(c *gin.Context) {
+	var input UpdatePasswordForm
+	if err := c.ShouldBind(&input); err != nil {
+		returnErrorAndAbort(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if input.NewPassword != input.ConfirmPassword {
+		returnErrorAndAbort(c, http.StatusBadRequest, "Failed to confirm password.")
+		return
+	}
+
+	userID := c.GetHeader("userID")
+	if userID == "" {
+		returnErrorAndAbort(c, http.StatusBadRequest, "userID is empty.")
+		return
+	}
+
+	// Get User from User ID
+	var user models.User
+	source := user.GetUserByID(userID)
+	if source == nil {
+		returnErrorAndAbort(c, http.StatusNotFound, "User not found.")
+		return
+	}
+
+	// Check if the Old Password is the same with the new one.
+	err := bcrypt.CompareHashAndPassword(source.Password, []byte(input.OldPassword))
+	if err != nil {
+		returnErrorAndAbort(c, http.StatusForbidden, "Old password is invalid.")
+		return
+	}
+
+	// Generate New Password.
+	newPassword, err := bcrypt.GenerateFromPassword([]byte(input.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		returnErrorAndAbort(c, http.StatusBadRequest, "Failed to encrypt password.")
+		return
+	}
+
+	err = source.UpdatePassword(newPassword)
+	if err != nil {
+		returnErrorAndAbort(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"msg": "Password updated successfully.",
+	})
 	return
 }

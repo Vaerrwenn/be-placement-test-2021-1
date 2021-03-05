@@ -33,3 +33,22 @@ func (u *User) GetUserByEmail() *User {
 	}
 	return result
 }
+
+// GetUserByID get a User data by ID.
+func (u *User) GetUserByID(id string) *User {
+	var result User
+
+	err := database.DB.Where("id = ?", id).First(&result).Error
+
+	if err != nil {
+		return nil
+	}
+
+	return &result
+}
+
+// UpdatePassword updates a User's password.
+func (u *User) UpdatePassword(password []byte) error {
+	err := database.DB.Model(&u).Update("password", password).Error
+	return err
+}

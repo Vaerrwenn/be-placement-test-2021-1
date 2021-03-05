@@ -47,6 +47,11 @@ func main() {
 		protected := v1.Group("/protected")
 		protected.Use(middleware.AuthJWT())
 		{
+			user := protected.Group("/profile")
+			{
+				user.PATCH("/change-password", userController.UpdatePasswordHandler)
+			}
+
 			saving := protected.Group("/s")
 			{
 				// Create a Saving account
