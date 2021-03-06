@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -35,6 +36,13 @@ func main() {
 	migration.AutoMigrate(database.DB)
 	// Initialize Gin with default settings.
 	r := gin.Default()
+
+	r.GET("/", func(c *gin.Context) {
+		c.String(200,
+			fmt.Sprintf("This is a webservice for Albert Harican's Backend Engineer Technical Test."),
+		)
+		return
+	})
 
 	v1 := r.Group("/v1")
 	{
