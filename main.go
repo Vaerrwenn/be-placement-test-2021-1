@@ -16,10 +16,14 @@ import (
 )
 
 func main() {
-	// Loads .env file
-	err := godotenv.Load()
-	if err != nil {
-		log.Printf(err.Error())
+
+	runMode := os.Getenv("GIN_MODE")
+	if runMode != "release" {
+		// Loads .env file
+		err := godotenv.Load()
+		if err != nil {
+			log.Printf(err.Error())
+		}
 	}
 
 	port := os.Getenv("PORT")
